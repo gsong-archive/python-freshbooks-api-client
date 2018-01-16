@@ -1,0 +1,6 @@
+-r app.in
+
+bumpversion
+ipython
+isort
+mypy
