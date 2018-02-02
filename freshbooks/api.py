@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Tuple
 
 import attr
 import requests
@@ -31,19 +32,31 @@ class Client:
         endpoint = f"/timetracking/business/{business_id}/time_entries"
         return self._filtered_get(endpoint, filters)
 
+    def create_time_entry(self, business_id: int, data: dict) -> dict:
+        endpoint = f"/timetracking/business/{business_id}/time_entries"
+        return self._post(endpoint, {'time_entry': data}, self.__headers__)
+
     def _get(
             self,
             endpoint: str,
             headers: dict=None,
             params: dict=None,
     ) -> dict:
-        if headers is None:
-            headers = self.__headers_with_content_type__
-
-        url = f"{self.__base_url__}{endpoint}"
+        url, headers = self._prep_request(endpoint, headers)
         res = requests.get(url, headers=headers, params=params)
         log.debug(res.url)
-        print(res.url)
+        return res.json()
+
+    def _post(
+            self,
+            endpoint: str,
+            data: dict,
+            headers: dict=None,
+    ) -> dict:
+        url, headers = self._prep_request(endpoint, headers)
+        res = requests.post(url, headers=headers, json=data)
+        log.debug(res.url)
+        log.debug(res.request.body)
         return res.json()
 
     def _filtered_get(self, endpoint: str, filters: dict=None) -> dict:
@@ -54,11 +67,18 @@ class Client:
             endpoint: str,
             filters: dict=None,
     ) -> dict:
+        searches = None
         if filters:
             searches = {f"search[{k}]": v for k, v in filters.items()}
         return self._get(
             endpoint, self.__headers_with_content_type__, searches
         )
+
+    def _prep_request(self, endpoint, headers) -> Tuple[str, dict]:
+        if headers is None:
+            headers = self.__headers_with_content_type__
+        url = self.__base_url__ + endpoint
+        return url, headers
 
     @property
     @lru_cache()
