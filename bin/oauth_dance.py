@@ -18,6 +18,9 @@ HEADERS = {
 @click.argument('client-secret')
 @click.argument('redirect-url')
 def cli(client_id, client_secret, redirect_url):
+    """
+    Do the OAuth dance with FreshBooks API server to get the access token.
+    """
     auth_url, state = get_auth_info(client_id, redirect_url)
     display_auth_info(auth_url)
     response = click.prompt('Paste the response URL')
